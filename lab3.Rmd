@@ -1,0 +1,127 @@
+---
+title: "lab3"
+author: "Alex Gurganus"
+date: "February 15, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+data(happy, package="productplots")
+```
+
+Load serialized exerpt from cource website
+
+```{r}
+
+HAPPY <- readRDS("data/HAPPY.rds")
+```
+
+Consolidate missing values into `NA`
+```{r}
+library(tidyverse)
+library(dplyr)
+
+HAPPY <- HAPPY %>% mutate(DEGREE=replace(DEGREE, DEGREE %in% c("NA", "DK", "IAP"), NA))
+
+```
+
+Consolidate `FINRELA`
+```{r}
+HAPPY <- HAPPY %>% mutate(FINRELA=replace(FINRELA, FINRELA %in% c("NA", "DK", "IAP"), NA))
+```
+
+Consolidate `HEALTH`
+```{r}
+HAPPY <- HAPPY %>% mutate(HEALTH=replace(HEALTH, HEALTH %in% c("NA", "DK", "IAP"), NA))
+```
+
+```{r}
+HAPPY <- HAPPY %>% mutate(AGE=replace(AGE, AGE == "89 OR OLDER", 89))
+
+HAPPY$AGE <- as.numeric(HAPPY$AGE)
+```
+
+Consolidate `PARTYID`
+```{r}
+HAPPY <- HAPPY %>% mutate(PARTYID=replace(PARTYID, PARTYID %in% c("NA", "DK", "IAP"), NA))
+```
+
+Consolidate `POLVIEWS`
+```{r}
+HAPPY <- HAPPY %>% mutate(POLVIEWS=replace(POLVIEWS, POLVIEWS %in% c("NA", "DK", "IAP"), NA))
+```
+
+```{r}
+HAPPY %>% ggplot(aes(x=HAPPY)) + geom_bar() 
+```
+
+
+Categorize variables. Convert age to numeric
+```{r}
+
+cols = c("HAPPY", "SEX", "MARITAL", "DEGREE", "FINRELA", "HEALTH", "PARTYID", "POLVIEWS")
+
+HAPPY[cols] <- lapply(HAPPY[cols], factor)
+HAPPY$MARITAL = factor(HAPPY$MARITAL, levels=c("NEVER MARRIED", "SEPARATED", "MARRIED", "DIVORCED", "WIDOWED", "NA"))
+
+HAPPY$DEGREE <- factor(HAPPY$DEGREE, levels=c("LT HIGH SCHOOL", "HIGH SCHOOL", "JUNIOR COLLEGE", "BACHELOR", "GRADUATE", "NA"))
+
+HAPPY$FINRELA <- factor(HAPPY$FINRELA, levels=c("FAR BELOW AVERAGE", "BELOW AVERAGE", "AVERAGE", "ABOVE AVERAGE", "FAR ABOVE AVERAGE", "NA"))
+
+HAPPY$HEALTH = factor(HAPPY$HEALTH, levels=c("POOR", "FAIR", "GOOD", "EXCELLENT", "NA"))
+
+HAPPY$PARTYID <- factor(HAPPY$PARTYID)
+
+```{r}
+HAPPY$POLVIEWS <- factor(HAPPY$POLVIEWS, levels=c("EXTRMLY CONSERVATIVE", "CONSERVATIVE", "SLGHTLY CONSERVATIVE", "MODERATE", "SLIGHTLY LIBERAL", "LIBERAL", "EXTREMELY LIBERAL", "NA"))
+```
+
+The survey covered a wide range of age groups 20-70. The highest were in the 20s-40s. The majority of people surveyed were married. Slightly more females were asked questions, but not a large amount more. The majority of people reported being at least pretty happy. A fair amount of people identify as `moderate` or didn't dislose their general political views.
+
+```{r}
+HAPPY %>% ggplot(aes(x=HAPPY)) + geom_bar()
+HAPPY %>% ggplot(aes(x=YEAR)) + geom_bar()
+HAPPY %>% ggplot(aes(x=AGE)) + geom_bar()
+HAPPY %>% ggplot(aes(x=SEX)) + geom_bar()
+HAPPY %>% ggplot(aes(x=MARITAL)) + geom_bar()
+HAPPY %>% ggplot(aes(x=DEGREE)) + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+HAPPY %>% ggplot(aes(x=FINRELA)) + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+HAPPY %>% ggplot(aes(x=HEALTH)) + geom_bar()
+HAPPY %>% ggplot(aes(x=WTSSALL)) + geom_histogram()
+
+HAPPY %>% ggplot(aes(x=PARTYID)) + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+HAPPY %>% ggplot(aes(x=POLVIEWS)) + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + geom_bar()
+```
+
+```{r}
+HAPPY %>% 
+  filter(!is.na(FINRELA)) %>%
+           ggplot(aes(x=FINRELA,
+                      y = (..count..)/sum(..count..),
+                     fill=HAPPY)) + geom_bar() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  
+  geom_bar(position="fill") + ggtitle("Financial Stability and Happiness")
+
+```
+
+```{r}
+HAPPY %>% 
+  filter(!is.na(AGE)) %>%
+  filter(!is.na(FINRELA)) %>%
+  ggplot(aes(x=AGE,
+             y = (..count..)/sum(..count..),
+                     fill=FINRELA)) + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + geom_bar(position="fill") + ggtitle("Feeling of Financial Stability Across Ages")
+```
+
+As people age, there is an increase in the population of people who feel slightly above average in financial stability as they age. This trend peaks at age 50 and declines in the later yeras.
